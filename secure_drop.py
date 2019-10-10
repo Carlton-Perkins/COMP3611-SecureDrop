@@ -11,7 +11,9 @@ import crypt # Many Crypt functions
 from hmac import compare_digest as comp_hash 
 
 # Default config directory
-CONFIGFILE = pathlib.Path('~/.secure_drop/config').expanduser()
+CONFIGFILE = pathlib.Path('~/.config/secure_drop/config').expanduser()
+CONFIGFILE.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
+CONFIGFILE.touch(mode=0o700, exist_ok=True)
 
 def main():
     # Run Registration if not already done
@@ -20,12 +22,12 @@ def main():
         cleanUpAndExit()
 
     # Ask the user for login credentials
-    # login()
+    login()
 
     # Enter Custom SubShell defined be Shell class
     Shell().cmdloop()
     
-# Custom Shell class, Defines options avaiable from command line
+# Custom Shell class, Defines options available from command line
 # Has built in help command which prints the text in first line
 class Shell(cmd.Cmd):
     intro = ''
@@ -36,14 +38,22 @@ class Shell(cmd.Cmd):
         cleanUpAndExit()
     def do_add(self, args):
         'Add a new contact'
-        print('Add') # TODO stub
+        addContact()
     def do_list(self, args):
         'List all online contacts'
-        print('list') # TODO stub
+        listOnlineContacts()
     def do_send(self, args):
         'Transfer a file to contact'
-        print('send') # TODO stub
+        sendFile()
 
+def addContact():
+    print('addContact') # TODO stub
+
+def listOnlineContacts():
+    print('listOnlineContacts') # TODO stub
+
+def sendFile():
+    print('sendFile') # TODO stub
 
 # Find if a user is already registered
 # Done by checking the config file and seeing if it contains credentials
@@ -85,6 +95,26 @@ def register():
 
     writeConfig(config)
 
+def login():
+    print('login')
+
+    # ! Should not tell the user which part of the credential is invalid
+    # ! Need to save some information generated from the password to use to
+    # !     during the application run
+
+    enteredEmail = input('Enter your email address: ')
+
+    config = readConfig()
+
+    email = config['Cred']['email']
+
+    if (email == enteredEmail):    
+        password = config['Cred']['password']
+        if (not checkPassword(getpass.getpass('Enter your password: '), password)):
+            exit('Password Mismatch, Login cancelled')
+    else:
+        exit('User is not registered, Login cancelled')
+
 def checkPassword(plaintext, crypt):
     return comp_hash(cryptPasswordSalted(plaintext, crypt), crypt)
 
@@ -98,7 +128,7 @@ def cryptPasswordSalted(plaintext, salt):
 def readConfig():
     config = configparser.ConfigParser()
     if (CONFIGFILE.exists()):
-        with open(CONFIGFILE, "r") as fp:
+        with open(CONFIGFILE, "r+") as fp:
             config.read_file(fp)
     return config
 
