@@ -49,6 +49,12 @@ class Shell(cmd.Cmd):
 def addContact():
     print('addContact') # TODO stub
 
+    #Store in config file
+    # Name
+    # Email
+    # Fingerprint once we have seen them for the first time
+    # ? Public key ?
+
 def listOnlineContacts():
     print('listOnlineContacts') # TODO stub
 
