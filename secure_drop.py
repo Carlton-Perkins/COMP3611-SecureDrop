@@ -10,6 +10,8 @@ import crypt # Many Crypt functions
 # Constant time Hash comepare that prevents the raw from ever being in memory
 from hmac import compare_digest as comp_hash 
 
+import peerDetect
+
 # Default config directory
 CONFIGFILE = pathlib.Path('~/.config/secure_drop/config').expanduser()
 CONFIGFILE.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
