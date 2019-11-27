@@ -6,16 +6,28 @@ import pathlib # Sane Path accessors/Validators
 import configparser # .ini-ish file config accessor/generators
 import getpass # No echo prompt for password
 import crypt # Many Crypt functions
+import argparse # Command Line Argument Parser
+import logging # Logging tools
 
 # Constant time Hash comepare that prevents the raw from ever being in memory
 from hmac import compare_digest as comp_hash 
 
-import peerDetect
+logger = logging.getLogger('secure_drop')
+logger.propagate = False
+
+parser = argparse.ArgumentParser(description="Secure File Drop")
+parser.add_argument('-c','--config', action='store', default='~/.config/secure_drop/config')
+
+args = parser.parse_args()
+
+ConfigPath = args.config
 
 # Default config directory
-CONFIGFILE = pathlib.Path('~/.config/secure_drop/config').expanduser()
+CONFIGFILE = pathlib.Path(ConfigPath).expanduser()
 CONFIGFILE.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
 CONFIGFILE.touch(mode=0o700, exist_ok=True)
+
+import peerDetect
 
 def main():
     # Run Registration if not already done
@@ -122,6 +134,13 @@ def login():
             exit('Password Mismatch, Login cancelled')
     else:
         exit('User is not registered, Login cancelled')
+
+    # If above checks pass, user is valid
+    # Save login information to use in crypto functions
+
+    UserName = config['Cred']['name']
+    Email = config['Cred']['email']
+    key = ''
 
 def checkPassword(plaintext, crypt):
     return comp_hash(cryptPasswordSalted(plaintext, crypt), crypt)
