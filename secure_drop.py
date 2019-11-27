@@ -64,10 +64,23 @@ def addContact():
     print('addContact') # TODO stub
 
     #Store in config file
-    # Name
-    # Email
-    # Fingerprint once we have seen them for the first time
-    # ? Public key ?
+    newName = input('Enter full name: ')
+    newEmail = input('Enter email address: ')
+
+    config = readConfig()
+    name = config['Cred']['name']
+    email = config['Cred']['email']
+    
+    if (name == newName | email == newEmail):
+        print("Invalid User. User already existed.")
+        
+    else:
+        config['Cred'] = {
+        'name':newName,
+        'email':newEmail,
+        }
+        writeConfig(config)
+        print("Contact added")
 
 def listOnlineContacts():
     print('listOnlineContacts') # TODO stub
