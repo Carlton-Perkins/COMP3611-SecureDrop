@@ -9,6 +9,9 @@ import crypt # Many Crypt functions
 import argparse # Command Line Argument Parser
 import logging # Logging tools
 
+# RSA tools
+from Cryptodome.PublicKey import RSA 
+
 # Constant time Hash comepare that prevents the raw from ever being in memory
 from hmac import compare_digest as comp_hash 
 
@@ -27,7 +30,7 @@ CONFIGFILE = pathlib.Path(ConfigPath).expanduser()
 CONFIGFILE.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
 CONFIGFILE.touch(mode=0o700, exist_ok=True)
 
-import peerDetect
+# import peerDetect
 
 def main():
     # Run Registration if not already done
@@ -100,6 +103,8 @@ def isRegistered():
         config['Cred']['name']
         config['Cred']['email']
         config['Cred']['password']
+        config['Cred']['private_key']
+        config['Cred']['public_key']
 
         return True
     except KeyError: # Key does not exist in file
@@ -112,9 +117,16 @@ def register():
 
     name = input('Enter your full name: ')
     email = input('Enter your email address: ')
-    password = cryptPassword(getpass.getpass('Enter your password: '))
+    raw_password = getpass.getpass('Enter your password: ')
+    password = cryptPassword(raw_password)
     if (not checkPassword(getpass.getpass('Re-enter your password: '), password)):
         exit('Password Mismatch, Registration cancelled')
+        
+    #Generate RSA Public/Private Key
+    key = RSA.generate(2048)
+    private_key = key.export_key(passphrase=raw_password, pkcs=8, protection='scryptAndAES128-CBC')
+    public_key = key.publickey().export_key()
+    del raw_password
 
     print('Registration Successful')
 
@@ -124,7 +136,9 @@ def register():
     config['Cred'] = {
         'name':name,
         'email':email,
-        'password':password}
+        'password':password,
+        'public_key':public_key,
+        'private_key':private_key}
 
     writeConfig(config)
 
@@ -153,7 +167,7 @@ def login():
 
     UserName = config['Cred']['name']
     Email = config['Cred']['email']
-    key = ''
+    key = RSA.import_key(config['Cred']['private_key'])
 
 def checkPassword(plaintext, crypt):
     return comp_hash(cryptPasswordSalted(plaintext, crypt), crypt)
