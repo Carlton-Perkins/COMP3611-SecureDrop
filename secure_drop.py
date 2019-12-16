@@ -71,14 +71,14 @@ def addContact():
     newEmail = input('Enter email address: ')
 
     config = readConfig()
-    name = config['Contacts']['name']
-    email = config['Contacts']['email']
+    name = config['Cred']['name']
+    email = config['Cred']['email']
     
-    if (name == newName | email == newEmail):
+    if (name == newName ):
         print("Invalid User. User already existed.")
-        
+    
     else:
-        config['Contacts'] = {
+        config['Contacts ' + newName] = {
         'name':newName,
         'email':newEmail,
         }
@@ -169,11 +169,8 @@ def login():
 
     UserName = config['Cred']['name']
     Email = config['Cred']['email']
-
-    print(config['Cred']['private_key'])
-    print(rawPassword)
-
-    key = RSA.import_key(config['Cred']['private_key'], passphrase=rawPassword)
+    
+    # key = RSA.import_key(config['Cred']['private_key'], passphrase=rawPassword)
 
 def checkPassword(plaintext, crypt):
     return comp_hash(cryptPasswordSalted(plaintext, crypt), crypt)
