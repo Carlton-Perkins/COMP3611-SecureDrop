@@ -12,7 +12,7 @@ import logging # Logging tools
 # RSA tools
 from Cryptodome.PublicKey import RSA 
 
-# Constant time Hash comepare that prevents the raw from ever being in memory
+# Constant time Hash compare that prevents the raw from ever being in memory
 from hmac import compare_digest as comp_hash 
 
 logger = logging.getLogger('secure_drop')
@@ -71,14 +71,14 @@ def addContact():
     newEmail = input('Enter email address: ')
 
     config = readConfig()
-    name = config['Cred']['name']
-    email = config['Cred']['email']
+    name = config['Contacts']['name']
+    email = config['Contacts']['email']
     
     if (name == newName | email == newEmail):
         print("Invalid User. User already existed.")
         
     else:
-        config['Cred'] = {
+        config['Contacts'] = {
         'name':newName,
         'email':newEmail,
         }
@@ -154,10 +154,12 @@ def login():
     config = readConfig()
 
     email = config['Cred']['email']
+    rawPassword = str
 
     if (email == enteredEmail):    
         password = config['Cred']['password']
-        if (not checkPassword(getpass.getpass('Enter your password: '), password)):
+        rawPassword = getpass.getpass('Enter your password: ')
+        if (not checkPassword(rawPassword, password)):
             exit('Password Mismatch, Login cancelled')
     else:
         exit('User is not registered, Login cancelled')
@@ -167,7 +169,11 @@ def login():
 
     UserName = config['Cred']['name']
     Email = config['Cred']['email']
-    key = RSA.import_key(config['Cred']['private_key'])
+
+    print(config['Cred']['private_key'])
+    print(rawPassword)
+
+    key = RSA.import_key(config['Cred']['private_key'], passphrase=rawPassword)
 
 def checkPassword(plaintext, crypt):
     return comp_hash(cryptPasswordSalted(plaintext, crypt), crypt)
