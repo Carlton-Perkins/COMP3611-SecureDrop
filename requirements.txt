@@ -2,3 +2,4 @@ cryptography==2.6.1
 flake8==3.7.8
 SecretStorage==2.3.1
 timeloop==1.0.2
+pycryptodome==3.9.4
