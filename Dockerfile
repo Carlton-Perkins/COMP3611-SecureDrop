@@ -1,9 +1,11 @@
 FROM python:latest
 
-COPY *.py /SecureDrop/
-COPY *.txt /SecureDrop/
-COPY testConfigs/ /SecureDrop/testConfigs
+WORKDIR /SecureDrop/
 
-RUN pip3 install -r /SecureDrop/requirements.txt
+COPY *.py ./
+COPY *.txt ./
+COPY testConfigs/ ./testConfigs
+
+RUN pip3 install -r ./requirements.txt
 
 CMD bash
