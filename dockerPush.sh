@@ -1,0 +1,1 @@
+docker push docker.pkg.github.com/carltonrp52/comp-securedrop/latest:latest

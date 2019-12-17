@@ -9,16 +9,26 @@ from datetime import timedelta,datetime
 from construct import *
 
 ConfinPacket = Struct("key" / Int, "secret" / Int)
+
+# ? Probably should not contain real identification information, should be replace with a negotiation
 StringPacket = Struct("name" / CString("utf8"), "id" / VarInt, "confin" / ConfinPacket)
 TIMEOUTSIZE = 10
+
+class Peer:
+    def __init__(self):
+        self.name = str
+        self.id = 0
+        self.ipaddr = None
+
+
 
 # Class to provide a list of peers to the host script
 # This class uses a port range to allow for several instances on the same 
 # computer to still work
 
 class PeerDetect:
-    # Default constuctor, name and id need to be defined prior to starting
-    def __init__(self, portRange=range(50065, 50075), broadcastGroup='224.3.29.71', id=-1, name="Unknown"):
+    # Default constructor, name and id need to be defined prior to starting
+    def __init__(self, portRange=range(50065, 50075), broadcastGroup='224.3.29.71', id=0, name="Unknown"):
         #Configs
         self.portRange = portRange
         self.broadcastGroup = broadcastGroup

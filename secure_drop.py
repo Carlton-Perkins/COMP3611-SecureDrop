@@ -88,7 +88,16 @@ def addContact():
         print("Contact added")
 
 def listOnlineContacts():
-    print('listOnlineContacts') # TODO stub
+    print('Online Contacts: ')
+
+    for peer in peerDetect.getPeerList():
+        config = readConfig()
+        try:
+            if (config['Contacts ' + peer]):
+                print('\t' + config['Contacts ' + peer]['name'] + " <" + config['Contacts ' + peer]['email'] +"> ")
+        except KeyError:
+            pass
+
 
 def sendFile():
     print('sendFile') # TODO stub
