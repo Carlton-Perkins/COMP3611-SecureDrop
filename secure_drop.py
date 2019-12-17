@@ -8,6 +8,8 @@ import getpass # No echo prompt for password
 import crypt # Many Crypt functions
 import argparse # Command Line Argument Parser
 import logging # Logging tools
+from timeloop import Timeloop # For async calls
+
 
 # RSA tools
 from Cryptodome.PublicKey import RSA 
@@ -30,7 +32,7 @@ CONFIGFILE = pathlib.Path(ConfigPath).expanduser()
 CONFIGFILE.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
 CONFIGFILE.touch(mode=0o700, exist_ok=True)
 
-# import peerDetect
+from peerDetect import *
 
 def main():
     # Run Registration if not already done
@@ -170,6 +172,10 @@ def login():
     UserName = config['Cred']['name']
     Email = config['Cred']['email']
     
+    peerDetect.id = abs(hash(UserName+Email))
+    peerDetect.name = UserName
+    startloop()
+
     # key = RSA.import_key(config['Cred']['private_key'], passphrase=rawPassword)
 
 def checkPassword(plaintext, crypt):
@@ -192,7 +198,30 @@ def readConfig():
 def writeConfig(config):
     with open(CONFIGFILE, "w+") as fp:
         config.write(fp)
-    
+
+### PeerDetect Setup ###
+timeloop = Timeloop()
+
+peerDetect = PeerDetect()
+
+@timeloop.job(interval=timedelta(seconds=10))
+def broadcast():
+    # packet = struct.pack('{}s'.format(len(peerDetect.idPacket)),bytes(peerDetect.idPacket, 'utf-8'))
+    s = StringPacket.build(dict(id=peerDetect.id,name=peerDetect.name,confin=dict(key=4,secret=6)))
+    peerDetect.send(message=s)
+
+@timeloop.job(interval=timedelta(seconds=1))
+def receive():
+    peerDetect.updateMessages()
+
+def startloop():
+    timeloop.start(block=False)
+def stoploop():
+    timeloop.stop()
+
+
+
+
 # Clean exit of subshell
 def cleanUpAndExit():
     print('Exit SecureDrop')
