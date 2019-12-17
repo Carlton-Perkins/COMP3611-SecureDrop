@@ -41,7 +41,7 @@ class PeerDetect:
         self._startServer()
         self._startClient()
         
-        timeloop.start(block=False)
+        # timeloop.start(block=False)
 
     # Internal method to start client
     def _startClient(self):

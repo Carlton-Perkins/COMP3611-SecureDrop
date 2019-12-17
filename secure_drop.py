@@ -174,6 +174,7 @@ def login():
     
     peerDetect.id = abs(hash(UserName+Email))
     peerDetect.name = UserName
+    peerDetect.start() 
     startloop()
 
     # key = RSA.import_key(config['Cred']['private_key'], passphrase=rawPassword)
