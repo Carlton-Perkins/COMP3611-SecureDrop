@@ -1,36 +1,35 @@
 #!/usr/bin/env python3
 
-# import os
-import cmd  # Supplies the subshell CMD prompt
-import pathlib  # Sane Path accessors/Validators
-import configparser  # .ini-ish file config accessor/generators
-import getpass  # No echo prompt for password
-import crypt  # Many Crypt functions
 import argparse  # Command Line Argument Parser
+import cmd  # Supplies the subshell CMD prompt
+import configparser  # .ini-ish file config accessor/generators
+import crypt  # Many Crypt functions
+import getpass  # No echo prompt for password
 import logging  # Logging tools
-from timeloop import Timeloop  # For async calls
+import pathlib  # Sane Path accessors/Validators
 from datetime import timedelta  # Datetime utils
-
-# RSA tools
-from Cryptodome.PublicKey import RSA
-
 # Constant time Hash compare that prevents the raw from ever being in memory
 from hmac import compare_digest as comp_hash
 
+# RSA tools
+from Cryptodome.PublicKey import RSA
+from timeloop import Timeloop  # For async calls
+
 from peerDetect import PeerDetect, StringPacket
 
-
-logger = logging.getLogger('secure_drop')
+# Configure logging
+logger = logging.getLogger()
 logger.propagate = True
 logger.setLevel(logging.CRITICAL)
 
+# Configure Argument Parsing
 parser = argparse.ArgumentParser(description="Secure File Drop")
 parser.add_argument('-c', '--config', action='store',
                     default='~/.config/secure_drop/config')
 parser.add_argument('-d', '--debug', action='store_true', default=False)
-
 args = parser.parse_args()
 
+# Extract args
 ConfigPath = args.config
 DEBUG = args.debug
 
@@ -40,8 +39,8 @@ CONFIGFILE.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
 CONFIGFILE.touch(mode=0o700, exist_ok=True)
 
 
+# ######################## MAIN ######################## #
 def main():
-
     # Run Registration if not already done
     if (not isRegistered()):
         register()
@@ -53,10 +52,10 @@ def main():
     # Enter Custom SubShell defined be Shell class
     Shell().cmdloop()
 
+
+# ######################## SHELL ######################## #
 # Custom Shell class, Defines options available from command line
 # Has built in help command which prints the text in first line
-
-
 class Shell(cmd.Cmd):
     intro = ''
     prompt = 'Secure_Drop> '
@@ -137,6 +136,7 @@ def sendFile(arg):
         return
 
 
+# ######################## HELPERS ######################## #
 def getOnlineContacts():
     peerlist = list()
     for peer in peerDetect.getPeerList():
@@ -276,7 +276,7 @@ def writeConfig(config):
         config.write(fp)
 
 
-# ### PeerDetect Setup ### #
+# ######################## PeerDetect Setup ######################## #
 timeloop = Timeloop()
 
 timeloopLogger = logging.getLogger('timeloop')
@@ -286,6 +286,7 @@ timeloopLogger.setLevel(logging.CRITICAL)
 peerDetect = PeerDetect()
 
 
+# Async function for broadcasting alive to peers
 @timeloop.job(interval=timedelta(seconds=10))
 def broadcast():
     s = StringPacket.build(dict(id=peerDetect.id, name=peerDetect.name,
@@ -293,15 +294,18 @@ def broadcast():
     peerDetect.send(message=s)
 
 
+# Async function for receiving messages from peers
 @timeloop.job(interval=timedelta(seconds=1))
 def receive():
     peerDetect.updateMessages()
 
 
+# Utility to start non blocking timeloop
 def startloop():
     timeloop.start(block=False)
 
 
+# Utility to stop timeloop
 def stoploop():
     timeloop.stop()
 
