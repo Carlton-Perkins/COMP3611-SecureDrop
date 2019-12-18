@@ -36,13 +36,11 @@ elif (mode == 'read'):
 
     c, addr = conn.accept()
     print('{} connected.'.format(addr))
-    
+
     while True:
         data = c.recv(blocksize)
         print(data)
 
-        if not data: 
+        if not data:
             print("Done")
             break
-
-

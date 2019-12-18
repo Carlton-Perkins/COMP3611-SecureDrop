@@ -5,14 +5,17 @@ import struct
 import time
 import sys
 from timeloop import Timeloop
-from datetime import timedelta,datetime
-from construct import *
+from datetime import timedelta, datetime
+from construct import Struct, CString, Int, VarInt
 
 ConfinPacket = Struct("key" / Int, "secret" / Int)
 
-# ? Probably should not contain real identification information, should be replace with a negotiation
-StringPacket = Struct("name" / CString("utf8"), "id" / VarInt, "confin" / ConfinPacket)
+# ? Probably should not contain real identification information,
+# ? should be replace with a negotiation
+StringPacket = Struct("name" / CString("utf8"), "id" / VarInt,
+                      "confin" / ConfinPacket)
 TIMEOUTSIZE = 10
+
 
 class Peer:
     def __init__(self):
@@ -20,16 +23,17 @@ class Peer:
         self.id = 0
         self.ipaddr = None
 
-
-
 # Class to provide a list of peers to the host script
-# This class uses a port range to allow for several instances on the same 
+# This class uses a port range to allow for several instances on the same
 # computer to still work
 
+
 class PeerDetect:
+
     # Default constructor, name and id need to be defined prior to starting
-    def __init__(self, portRange=range(50065, 50075), broadcastGroup='224.3.29.71', id=0, name="Unknown"):
-        #Configs
+    def __init__(self, portRange=range(50065, 50075),
+                 broadcastGroup='224.3.29.71', id=0, name="Unknown"):
+        # Configs
         self.portRange = portRange
         self.broadcastGroup = broadcastGroup
         self.id = id
@@ -37,7 +41,7 @@ class PeerDetect:
 
         self.DEBUG = False
 
-        #Internals
+        # Internals
         self.client = None
         self.server = None
         self.peerList = dict()
@@ -52,7 +56,7 @@ class PeerDetect:
     def start(self):
         self._startServer()
         self._startClient()
-        
+
         # timeloop.start(block=False)
 
     # Internal method to start client
@@ -75,7 +79,7 @@ class PeerDetect:
                 connected = True
                 print("Connected with port {}".format(port))
                 pass
-            except OSError as e:
+            except OSError:
                 print("Can not connect with port {}".format(port))
                 pass
             if connected:
@@ -86,7 +90,8 @@ class PeerDetect:
 
         group = socket.inet_aton('224.3.29.71')
         mreq = struct.pack('4sL', group, socket.INADDR_ANY)
-        self.server.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        self.server.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
+                               mreq)
 
     # Stop Timeloop
     def stop(self):
@@ -96,12 +101,13 @@ class PeerDetect:
     def updateMessages(self):
         data, addr = self.server.recvfrom(1024)
         if data:
-            packet = StringPacket.parse(data) # Decode received data
+            packet = StringPacket.parse(data)  # Decode received data
 
             if not packet.id == self.id:
-                if (self.DEBUG): print("Data: {} From: {}".format(packet, addr))
+                if (self.DEBUG):
+                    print("Data: {} From: {}".format(packet, addr))
 
-                self.peerList[packet.name] = datetime.now() 
+                self.peerList[packet.name] = datetime.now()
 
         peerList = self.peerList.copy()
         for peer in peerList:
@@ -128,15 +134,15 @@ if __name__ == "__main__":
 
     @timeloop.job(interval=timedelta(seconds=10))
     def broadcast():
-        # packet = struct.pack('{}s'.format(len(peerDetect.idPacket)),bytes(peerDetect.idPacket, 'utf-8'))
-        s = StringPacket.build(dict(id=peerDetect.id,name=peerDetect.name,confin=dict(key=4,secret=6)))
+        s = StringPacket.build(dict(id=peerDetect.id, name=peerDetect.name,
+                               confin=dict(key=4, secret=6)))
         peerDetect.send(message=s)
 
     @timeloop.job(interval=timedelta(seconds=1))
     def receive():
         peerDetect.updateMessages()
 
-    peerDetect.start()    
+    peerDetect.start()
     while True:
         time.sleep(5)
         pass
