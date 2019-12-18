@@ -113,15 +113,15 @@ def listOnlineContacts():
 
 def sendFile(arg):
     argsplit = arg.split()
-    if(len(argsplit) < 2 or len(argsplit) > 2):
+    if(len(argsplit) != 2):
         print("Invalid argument count")
         return
 
     contact, filepath = argsplit
     # ARG 1 must be a contact
     if (not doesContactExist(contact)):
-        print("""'{}' is not a known contact, \
-            maybe you need to add them with add?""".format(contact))
+        print("'{}' is not a known contact, "
+              "maybe you need to add them with add?".format(contact))
         return
     # ARG 2 must be a valid file
     file = pathlib.Path(filepath)
@@ -276,7 +276,7 @@ def writeConfig(config):
         config.write(fp)
 
 
-# ### PeerDetect Setup ###
+# ### PeerDetect Setup ### #
 timeloop = Timeloop()
 
 timeloopLogger = logging.getLogger('timeloop')
