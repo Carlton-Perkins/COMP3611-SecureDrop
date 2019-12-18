@@ -18,14 +18,17 @@ from Cryptodome.PublicKey import RSA
 from hmac import compare_digest as comp_hash 
 
 logger = logging.getLogger('secure_drop')
-logger.propagate = False
+logger.propagate = True
+logger.setLevel(logging.CRITICAL)
 
 parser = argparse.ArgumentParser(description="Secure File Drop")
 parser.add_argument('-c','--config', action='store', default='~/.config/secure_drop/config')
+parser.add_argument('-d','--debug' , action='store_true', default=False)
 
 args = parser.parse_args()
 
 ConfigPath = args.config
+DEBUG = args.debug
 
 # Default config directory
 CONFIGFILE = pathlib.Path(ConfigPath).expanduser()
@@ -62,12 +65,10 @@ class Shell(cmd.Cmd):
         'List all online contacts'
         listOnlineContacts()
     def do_send(self, args):
-        'Transfer a file to contact'
-        sendFile()
+        'Transfer a file to contact: SEND <contact_email> <filename>'
+        sendFile(args)
 
 def addContact():
-    print('addContact') # TODO stub
-
     #Store in config file
     newName = input('Enter full name: ')
     newEmail = input('Enter email address: ')
@@ -91,16 +92,57 @@ def listOnlineContacts():
     print('Online Contacts: ')
 
     for peer in peerDetect.getPeerList():
-        config = readConfig()
         try:
-            if (config['Contacts ' + peer]):
-                print('\t' + config['Contacts ' + peer]['name'] + " <" + config['Contacts ' + peer]['email'] +"> ")
+            if (doesContactExist(peer)):
+                contact = getContact(peer)
+                print("\t {} <{}>".format(contact['name'],contact['email']))
         except KeyError:
             pass
 
 
-def sendFile():
-    print('sendFile') # TODO stub
+def sendFile(arg):
+    argsplit = arg.split()
+    if(len(argsplit) < 2 or len(argsplit) > 2):
+        print("Invalid argument count")
+        return
+
+    contact, filepath = argsplit
+    # ARG 1 must be a contact
+    if (doesContactExist(contact) == False):
+        print("'{}' is not a known contact, maybe you need to add them with add?".format(contact))
+        return
+    # ARG 2 must be a valid file
+    file =  pathlib.Path(filepath)
+    if (not file.exists()):
+        print("'{}', no file found".format(filepath))
+        return
+
+    print("File: {}, Contact: {}".format(filepath,contact))
+
+    # Is contact online?
+    if (not contact in getOnlineContacts()):
+        print("Contact '{}' is not online".format(contact))
+        return
+
+
+def getOnlineContacts():
+    peerlist = list()
+    for peer in peerDetect.getPeerList():
+        if (doesContactExist(peer)):
+            peerlist.append(getContact(peer)['name'])
+    return peerlist
+
+def doesContactExist(name):
+    config = readConfig()
+    try:
+        if (config['Contacts ' + name]):
+            return True
+    except KeyError:
+        return False
+    
+def getContact(name):
+    config = readConfig()
+    return config['Contacts ' + name]
 
 # Find if a user is already registered
 # Done by checking the config file and seeing if it contains credentials
@@ -183,6 +225,7 @@ def login():
     
     peerDetect.id = abs(hash(UserName+Email))
     peerDetect.name = UserName
+    peerDetect.setDebug(DEBUG)
     peerDetect.start() 
     startloop()
 
@@ -211,6 +254,10 @@ def writeConfig(config):
 
 ### PeerDetect Setup ###
 timeloop = Timeloop()
+
+timeloopLogger = logging.getLogger('timeloop')
+timeloopLogger.propagate = False
+timeloopLogger.setLevel(logging.CRITICAL)
 
 peerDetect = PeerDetect()
 

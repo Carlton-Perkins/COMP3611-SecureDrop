@@ -35,6 +35,8 @@ class PeerDetect:
         self.id = id
         self.name = name
 
+        self.DEBUG = False
+
         #Internals
         self.client = None
         self.server = None
@@ -97,7 +99,7 @@ class PeerDetect:
             packet = StringPacket.parse(data) # Decode received data
 
             if not packet.id == self.id:
-                print("Data: {} From: {}".format(packet, addr))
+                if (self.DEBUG): print("Data: {} From: {}".format(packet, addr))
 
                 self.peerList[packet.name] = datetime.now() 
 
@@ -105,11 +107,14 @@ class PeerDetect:
         for peer in peerList:
             if (((datetime.now() - peerList[peer]).seconds) > TIMEOUTSIZE):
                 self.peerList.pop(peer)
-                print("Client lost: {}".format(peer))
+                print("Peer lost: {}\n".format(peer))
 
     # Return list of all peers
     def getPeerList(self):
         return self.peerList.copy()
+
+    def setDebug(self, state):
+        self.DEBUG = state
 
 
 # Test function, call with name param as argv
